@@ -11,6 +11,15 @@ CreateThread(function()
 end)
 
 AddEventHandler('playerConnecting', function(name , reject, deferrals)
+    addToPlayers(source)
+end)
+
+RegisterNetEvent("crz_weather:setPlyOnList")
+AddEventHandler("crz_weather:setPlyOnList", function()
+    addToPlayers(source)
+end)
+
+addToPlayers = function(source)
     local playerId, identifier = source
     for k,v in ipairs(GetPlayerIdentifiers(playerId)) do
 		if string.match(v, 'license:') then
@@ -23,23 +32,8 @@ AddEventHandler('playerConnecting', function(name , reject, deferrals)
 			break
 		end
 	end
-end)
+end
 
-RegisterNetEvent("crz_weather:setPlyOnList")
-AddEventHandler("crz_weather:setPlyOnList", function()
-    local playerId, identifier = source
-    for k,v in ipairs(GetPlayerIdentifiers(playerId)) do
-		if string.match(v, 'license:') then
-			identifier = string.sub(v, 9)
-            Players[source] = {
-                id = source,
-                identifier = identifier,
-                name = GetPlayerName(source)
-            }
-			break
-		end
-	end
-end)
 
 RegisterNetEvent("crz_weather:getHasPermission")
 AddEventHandler("crz_weather:getHasPermission", function()
@@ -59,30 +53,36 @@ AddEventHandler("crz_weather:useCommand", function(cmd, arg, arg2)
         arg = false
     end
     if cmd == "setWeather" then
-        if not Config.weather[arg] then
-            return TriggerClientEvent("crz_weather:errorNotify", source, Config.text[Config.lang]["error_weather"])
+        for k,v in pairs(Config.weather) do
+            if arg == v then
+                current["weather"] = arg
+                TriggerClientEvent("crz_weather:syncWeather", -1, current["weather"], current["blackout"])
+                return
+            end
         end
-        current["weather"] = arg
-        TriggerClientEvent("crz_weather:syncWeather", -1, current["weather"], current["blackout"])
+        return TriggerClientEvent("crz_weather:errorNotify", source, Config.text[Config.lang]["error_weather"])
 
     elseif cmd == "setNextWeather" then
-        if not Config.weather[arg] then
-            return TriggerClientEvent("crz_weather:errorNotify", source, Config.text[Config.lang]["error_weather"])
-        end
-        nextWeather[1] = arg
-        nextWeather[2] = Config.weather[math.random(#Config.weather)]
-        nextWeather[3] = Config.weather[math.random(#Config.weather)]
-        if not Config.isWinter then
-            while Config.notWinterBlacklist[nextWeather[2]] do
+        for k,v in pairs(Config.weather) do
+            if arg == v then
+                nextWeather[1] = arg
                 nextWeather[2] = Config.weather[math.random(#Config.weather)]
-                Wait(0)
-            end
-            while Config.notWinterBlacklist[nextWeather[3]] do
                 nextWeather[3] = Config.weather[math.random(#Config.weather)]
-                Wait(0)
+                if not Config.isWinter then
+                    while Config.notWinterBlacklist[nextWeather[2]] do
+                        nextWeather[2] = Config.weather[math.random(#Config.weather)]
+                        Wait(0)
+                    end
+                    while Config.notWinterBlacklist[nextWeather[3]] do
+                        nextWeather[3] = Config.weather[math.random(#Config.weather)]
+                        Wait(0)
+                    end
+                end
+                TriggerClientEvent("crz_weather:syncNextWeather", -1, nextWeather)
+                return
             end
         end
-        TriggerClientEvent("crz_weather:syncNextWeather", -1, nextWeather)
+        return TriggerClientEvent("crz_weather:errorNotify", source, Config.text[Config.lang]["error_weather"])
 
     elseif cmd == "setTime" then
         if arg == nil or arg2 == nil then

@@ -70,6 +70,9 @@ AddEventHandler("crz_weather:syncWeather", function(weather, blackout)
 end)
 
 CreateThread(function()
+    ForceSnowPass(Config.isWinter)
+    SetForceVehicleTrails(Config.isWinter)
+    SetForcePedFootstepsTracks(Config.isWinter)
     while true do
         if latestWeather ~= current["weather"] then
             latestWeather = current["weather"]
@@ -83,9 +86,7 @@ CreateThread(function()
 		SetWeatherTypeNow(latestWeather)
 		SetWeatherTypeNowPersist(latestWeather)
 
-        SetForceVehicleTrails(Config.isWinter)
-        SetForcePedFootstepsTracks(Config.isWinter)
-        ForceSnowPass(Config.isWinter)
+        
     end
 end)
 
